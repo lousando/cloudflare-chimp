@@ -56,35 +56,94 @@ async function updateRecord(ipAddress: string, record: ConfigDnsRecord) {
       },
     ).then((r) => r.json());
 
-    const { errors, success } = await fetch(
+    /**
+     * Update existing domain
+     */
+
+    const subdomainDetails = await fetch(
       `https://api.cloudflare.com/client/v4
-/zones/${zoneDetails.result[0].id}/dns_records`,
+/zones/${
+        zoneDetails.result[0].id
+      }/dns_records?name=${record.subDomain}.${record.domain}`,
       {
-        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${config.cloudflareApiKey}`,
         },
-        body: JSON.stringify({
-          type: "A",
-          content: ipAddress,
-          name: record.subDomain,
-          proxied: record.useCloudflareCDN,
-        }),
       },
     ).then((r) => r.json());
 
-    if (success) {
-      console.log(`Successfully updated ${record.subDomain}.${record.domain}`);
+    const subdomainID: string | undefined = subdomainDetails.result[0]?.id;
+
+    /**
+     * Create new domain
+     */
+    if (!subdomainID) {
+      const { errors, success } = await fetch(
+        `https://api.cloudflare.com/client/v4
+/zones/${zoneDetails.result[0].id}/dns_records`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.cloudflareApiKey}`,
+          },
+          body: JSON.stringify({
+            type: "A",
+            content: ipAddress,
+            name: record.subDomain,
+            proxied: record.useCloudflareCDN,
+          }),
+        },
+      ).then((r) => r.json());
+
+      if (success) {
+        console.log(
+          `Successfully created ${record.subDomain}.${record.domain}`,
+        );
+      } else {
+        console.error("Config: ", record);
+        console.error(
+          `Could not create ${record.subDomain}.${record.domain}: `,
+          errors,
+        );
+      }
     } else {
-      console.error("Config: ", record);
-      console.error(
-        `Could not update ${record.subDomain}.${record.domain}: `,
-        errors,
-      );
+      /**
+       * Update existing domain
+       */
+      const { errors, success } = await fetch(
+        `https://api.cloudflare.com/client/v4
+/zones/${zoneDetails.result[0].id}/dns_records/${subdomainID}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.cloudflareApiKey}`,
+          },
+          body: JSON.stringify({
+            type: "A",
+            content: ipAddress,
+            name: record.subDomain,
+            proxied: record.useCloudflareCDN,
+          }),
+        },
+      ).then((r) => r.json());
+
+      if (success) {
+        console.log(
+          `Successfully updated ${record.subDomain}.${record.domain}`,
+        );
+      } else {
+        console.error("Config: ", record);
+        console.error(
+          `Could not update ${record.subDomain}.${record.domain}: `,
+          errors,
+        );
+      }
     }
   } catch (error) {
-    console.error("Unexpected error when updating record: ", record);
+    console.error("Unexpected error when creating/updating record: ", record);
     console.error(error);
   }
 }
