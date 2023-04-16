@@ -60,7 +60,7 @@ async function updateRecord(ipAddress: string, record: ConfigDnsRecord) {
       `https://api.cloudflare.com/client/v4
 /zones/${zoneDetails.result[0].id}/dns_records`,
       {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${config.cloudflareApiKey}`,
