@@ -1,0 +1,8 @@
+# Jetbrains
+.idea
+
+# config
+config.yaml
+
+# env
+.env
