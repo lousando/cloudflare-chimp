@@ -3,7 +3,6 @@
 import "std/dotenv/load.ts";
 import { configFilePath, openConfig } from "./config.ts";
 import { ConfigDnsRecord, ConfigObject, IpInfoResponse } from "./types.ts";
-import { json } from "https://deno.land/std@0.182.0/yaml/schema/json.ts";
 
 const config: ConfigObject = await openConfig();
 
@@ -35,7 +34,7 @@ setInterval(fetchIpAndUpdateRecords, updateIntervalInMinutes);
  */
 async function getIP(): Promise<IpInfoResponse> {
   try {
-    return fetch(
+    return await fetch(
       `https://ipinfo.io?token=${config.ipInfoApiKey}`,
     ).then((r) => r.json());
   } catch (error) {

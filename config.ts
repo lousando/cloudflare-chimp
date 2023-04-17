@@ -4,7 +4,7 @@ import {
 } from "std/yaml/mod.ts";
 import { resolve } from "std/path/mod.ts";
 import { ConfigObject } from "./types.ts";
-const configFileName: string = "config.yaml";
+const configFileName = "config.yaml";
 export const configFilePath: string = resolve(
   `${Deno.env.get("CF_AUTO_DNS_CONFIG_DIR")}/${configFileName}`,
 );
@@ -26,7 +26,7 @@ export async function openConfig(): Array<ConfigObject> {
   try {
     const fileContents = await Deno.readTextFile(configFilePath);
     return parseFromYaml(fileContents);
-  } catch (error) {
+  } catch (_error) {
     console.warn(`Config not found. Please configure it at: ${configFilePath}`);
     await Deno.writeTextFile(configFilePath, stringifyToYaml(defaultConfig), {
       mode: 0o600,
