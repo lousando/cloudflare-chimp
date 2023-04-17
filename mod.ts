@@ -3,31 +3,47 @@
 import "std/dotenv/load.ts";
 import { configFilePath, openConfig } from "./config.ts";
 import { ConfigDnsRecord, ConfigObject, IpInfoResponse } from "./types.ts";
+import * as log from "std/log/mod.ts";
+
+await log.setup({
+  handlers: {
+    time: new log.handlers.ConsoleHandler("NOTSET", {
+      formatter: `[{levelName}] [${(new Date()).toLocaleString()}] {msg}`,
+    }),
+  },
+
+  loggers: {
+    default: {
+      handlers: ["time"],
+    },
+  },
+});
 
 const config: ConfigObject = await openConfig();
 
 if (!config.ipInfoApiKey) {
-  console.error(`Missing root 'ipInfoApiKey' value in ${configFilePath}`);
+  log.error(`Missing root 'ipInfoApiKey' value in ${configFilePath}`);
   Deno.exit(1);
 }
 
 if (!config.cloudflareApiKey) {
-  console.error(`Missing root 'cloudflareApiKey' value in ${configFilePath}`);
+  log.error(`Missing root 'cloudflareApiKey' value in ${configFilePath}`);
   Deno.exit(1);
 }
 
 if (!config.updateIntervalInMinutes >= 1) {
-  console.error(
+  log.error(
     `Please verify that the value of 'updateIntervalInMinutes' is at least 1 in ${configFilePath}`,
   );
   Deno.exit(1);
 }
 
-const updateIntervalInMinutes = Math.round(config.updateIntervalInMinutes) *
+const updateIntervalInMilliseconds =
+  Math.round(config.updateIntervalInMinutes) *
   60 * 1000;
 
 await fetchIpAndUpdateRecords(); // update on start
-setInterval(fetchIpAndUpdateRecords, updateIntervalInMinutes);
+setInterval(fetchIpAndUpdateRecords, updateIntervalInMilliseconds);
 
 /**
  * Methods
@@ -38,7 +54,7 @@ async function getIP(): Promise<IpInfoResponse> {
       `https://ipinfo.io?token=${config.ipInfoApiKey}`,
     ).then((r) => r.json());
   } catch (error) {
-    console.error("Failed to fetch info from IP Info: ", error);
+    log.error("Failed to fetch info from IP Info: ", error);
   }
 }
 
@@ -97,12 +113,12 @@ async function updateRecord(ipAddress: string, record: ConfigDnsRecord) {
       ).then((r) => r.json());
 
       if (success) {
-        console.log(
+        log.info(
           `Successfully created ${record.subDomain}.${record.domain}`,
         );
       } else {
-        console.error("Config: ", record);
-        console.error(
+        log.error("Config: ", record);
+        log.error(
           `Could not create ${record.subDomain}.${record.domain}: `,
           errors,
         );
@@ -130,20 +146,20 @@ async function updateRecord(ipAddress: string, record: ConfigDnsRecord) {
       ).then((r) => r.json());
 
       if (success) {
-        console.log(
+        log.info(
           `Successfully updated ${record.subDomain}.${record.domain}`,
         );
       } else {
-        console.error("Config: ", record);
-        console.error(
+        log.error("Config: ", record);
+        log.error(
           `Could not update ${record.subDomain}.${record.domain}: `,
           errors,
         );
       }
     }
   } catch (error) {
-    console.error("Unexpected error when creating/updating record: ", record);
-    console.error(error);
+    log.error("Unexpected error when creating/updating record: ", record);
+    log.error(error);
   }
 }
 
@@ -153,5 +169,7 @@ async function fetchIpAndUpdateRecords() {
     await updateRecord(ipInfo.ip, record);
   }
 
-  console.log("Finished updating. Waiting for next run.");
+  log.info(
+    `Finished updating. Waiting ${config.updateIntervalInMinutes}min for next run.`,
+  );
 }
