@@ -2,6 +2,8 @@
 
 Auto-Updates Cloudflare DNS records using [ipinfo](https://ipinfo.io/).
 
+[Gitea Repo](https://git.lousando.xyz/lousando/cloudflare-chimp)
+
 ## ipinfo & Cloudflare Setup ⚙️
 
 1. Register for a free plan over at [ipinfo](https://ipinfo.io/). They're pretty
