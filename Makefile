@@ -1,7 +1,7 @@
 .PHONY: build push
 
 build:
-	docker build . -t lousando/cloudflare-auto-dns
+	docker build . -t lousando/cloudflare-chimp
 
 push:
-	docker push lousando/cloudflare-auto-dns
+	docker push lousando/cloudflare-chimp
